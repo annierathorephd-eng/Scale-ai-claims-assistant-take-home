@@ -25,10 +25,10 @@ function mapClaimToDashboard(claim: Claim) {
   const source = claim.source
 
   let dashboardStatus: string
-  if (claim.status === "Approved") dashboardStatus = "approved"
+  // If agent reviewed it, it should show as "ai-reviewed" regardless of approval status
+  if (source === "agent-assessed") dashboardStatus = "ai-reviewed"
+  else if (claim.status === "Approved") dashboardStatus = "approved"
   else if (claim.status === "Pending Additional Info") dashboardStatus = "pending-info"
-  // Check if claim has been reviewed by agent (agent-assessed source)
-  else if (source === "agent-assessed") dashboardStatus = "ai-reviewed"
   else dashboardStatus = "needs-review"
 
   return {
