@@ -76,21 +76,35 @@ export function ClaimsDashboard() {
 
   useEffect(() => {
     const loadClaims = () => {
+      console.log("[v0] loadClaims called")
+
       const storedClaims = localStorage.getItem("mockClaims")
       let allClaims = [...mockClaims]
 
       if (storedClaims) {
         try {
           const parsedClaims = JSON.parse(storedClaims)
+          console.log("[v0] Loaded claims from localStorage:", parsedClaims.length)
+
           const claimIds = new Set(parsedClaims.map((c: Claim) => c.id))
           const uniqueMockClaims = allClaims.filter((c) => !claimIds.has(c.id))
           allClaims = [...parsedClaims, ...uniqueMockClaims]
+
+          console.log("[v0] Total claims after merge:", allClaims.length)
         } catch (e) {
-          console.error("Error parsing stored claims:", e)
+          console.error("[v0] Error parsing stored claims:", e)
         }
+      } else {
+        console.log("[v0] No stored claims found, using mock data")
       }
 
       const mappedClaims = allClaims.map(mapClaimToDashboard)
+      console.log("[v0] Mapped claims:", mappedClaims.length)
+      console.log(
+        "[v0] Sample claim statuses:",
+        mappedClaims.slice(0, 3).map((c) => ({ id: c.id, status: c.status, source: c.source })),
+      )
+
       setClaims(mappedClaims)
     }
 
@@ -98,6 +112,7 @@ export function ClaimsDashboard() {
 
     // Listen for custom refresh event
     const handleRefresh = () => {
+      console.log("[v0] refreshDashboard event received!")
       loadClaims()
     }
 

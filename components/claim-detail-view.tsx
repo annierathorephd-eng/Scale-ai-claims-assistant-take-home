@@ -297,6 +297,9 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
   }
 
   const handleApprove = () => {
+    console.log("[v0] handleApprove called, current status:", claimData.status)
+    console.log("[v0] isAgentView:", isAgentView)
+
     const updatedClaim = {
       ...claimData,
       status: isAgentView ? "ai-reviewed" : "approved",
@@ -310,18 +313,23 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
     }
     saveClaimData(updatedClaim)
 
+    console.log("[v0] Updating shared claim status to:", isAgentView ? "Needs Review" : "Approved")
+    console.log("[v0] Setting source to:", isAgentView ? "agent-assessed" : undefined)
+
     updateSharedClaimStatus(
       claimData.id,
       isAgentView ? "Needs Review" : "Approved",
       isAgentView ? "agent-assessed" : undefined,
     )
 
+    console.log("[v0] Dispatching refreshDashboard event")
     window.dispatchEvent(new Event("refreshDashboard"))
 
     setTimeout(() => {
       if (returnTo) {
         localStorage.setItem("dashboardView", returnTo)
       }
+      console.log("[v0] Navigating back to dashboard")
       router.push("/")
     }, 500)
   }
@@ -335,6 +343,8 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
   }
 
   const handleSendEmail = () => {
+    console.log("[v0] handleSendEmail called")
+
     const emailDetails = `Subject: ${emailSubject}\n\nMessage:\n${emailBody}`
 
     const updatedClaim = {
@@ -345,8 +355,10 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
     }
     saveClaimData(updatedClaim)
 
+    console.log("[v0] Updating shared claim status to: Pending Additional Info")
     updateSharedClaimStatus(claimData.id, "Pending Additional Info")
 
+    console.log("[v0] Dispatching refreshDashboard event")
     window.dispatchEvent(new Event("refreshDashboard"))
 
     setShowEmailDialog(false)
@@ -354,6 +366,7 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
       if (returnTo) {
         localStorage.setItem("dashboardView", returnTo)
       }
+      console.log("[v0] Navigating back to dashboard")
       router.push("/")
     }, 500)
   }
@@ -1543,14 +1556,23 @@ function updateSharedClaimStatus(
   newStatus: "Needs Review" | "Approved" | "Pending Additional Info" | "Sent for Approval",
   newSource?: string,
 ) {
+  console.log("[v0] updateSharedClaimStatus called with:", { claimId, newStatus, newSource })
+
   // Get all claims from localStorage or use mock data
   const storedClaims = localStorage.getItem("mockClaims")
   const claims = storedClaims ? JSON.parse(storedClaims) : [...mockClaims]
 
+  console.log("[v0] Current claims count:", claims.length)
+
   // Find and update the claim
   const claimIndex = claims.findIndex((c: SharedClaim) => c.id === claimId)
+  console.log("[v0] Found claim at index:", claimIndex)
+
   if (claimIndex !== -1) {
-    // Ensure the status is correctly mapped, especially for 'Sent for Approval'
+    const oldStatus = claims[claimIndex].status
+    const oldSource = claims[claimIndex].source // Corrected from 'index' to 'claimIndex'
+
+    // Ensure the status is correctly mapped
     const storageStatus =
       newStatus === "Sent for Approval"
         ? "Needs Review"
@@ -1558,7 +1580,7 @@ function updateSharedClaimStatus(
           ? "Approved"
           : newStatus === "Pending Additional Info"
             ? "Pending Additional Info"
-            : "Needs Review" // Default if not explicitly handled
+            : "Needs Review"
 
     claims[claimIndex].status = storageStatus as "Needs Review" | "Approved" | "Pending Additional Info"
     claims[claimIndex].lastUpdated = new Date().toISOString()
@@ -1567,7 +1589,18 @@ function updateSharedClaimStatus(
       claims[claimIndex].source = newSource
     }
 
+    console.log("[v0] Updated claim:", {
+      id: claimId,
+      oldStatus,
+      newStatus: claims[claimIndex].status,
+      oldSource,
+      newSource: claims[claimIndex].source,
+    })
+
     localStorage.setItem("mockClaims", JSON.stringify(claims))
+    console.log("[v0] Saved updated claims to localStorage")
+  } else {
+    console.log("[v0] WARNING: Claim not found in storage!")
   }
 }
 
