@@ -64,6 +64,16 @@ export function ClaimSubmissionForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] Form submission started")
+    console.log("[v0] Form data:", formData)
+    console.log("[v0] Uploaded files count:", uploadedFiles.length)
+
+    if (uploadedFiles.length === 0) {
+      console.log("[v0] Submission blocked: No photos uploaded")
+      alert("Please upload at least one photo of the damage before submitting.")
+      return
+    }
+
     console.log("[v0] Submitting claim with", uploadedFiles.length, "photos")
 
     const claim = generateAIAssessment({
@@ -363,11 +373,16 @@ export function ClaimSubmissionForm() {
             <Button
               type="submit"
               disabled={uploadedFiles.length === 0}
-              className="bg-gradient-blob text-white disabled:opacity-50"
+              className="bg-gradient-blob text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Submit Claim
             </Button>
           </div>
+          {uploadedFiles.length === 0 && (
+            <div className="flex justify-end mt-2">
+              <p className="text-sm text-muted-foreground">Please upload at least one photo to submit your claim</p>
+            </div>
+          )}
         </form>
       </main>
     </div>
