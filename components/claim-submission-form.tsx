@@ -25,6 +25,7 @@ export function ClaimSubmissionForm() {
   const [step, setStep] = useState<"form" | "success">("form")
   const [submittedClaimId, setSubmittedClaimId] = useState<string>("")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     policyId: "",
     firstName: "",
@@ -64,34 +65,62 @@ export function ClaimSubmissionForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("[v0] Submitting claim with", uploadedFiles.length, "photos")
+    console.log("[v0] Submit button clicked")
+    console.log("[v0] Is submitting:", isSubmitting)
 
-    const claim = generateAIAssessment({
-      policyId: formData.policyId,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      vinNumber: formData.vinNumber,
-      incidentLocation: formData.incidentLocation,
-      vehicle: formData.vehicle,
-      incidentDate: formData.incidentDate,
-      incidentDescription: formData.incidentDescription,
-      photos: uploadedFiles,
-    })
+    if (isSubmitting) {
+      console.log("[v0] Already submitting, ignoring click")
+      return
+    }
 
-    console.log(
-      "[v0] Generated claim:",
-      claim.id,
-      "with confidence:",
-      claim.confidenceScore,
-      "and source:",
-      claim.source,
-    )
+    console.log("[v0] Form submission started")
+    console.log("[v0] Form data:", formData)
+    console.log("[v0] Uploaded files count:", uploadedFiles.length)
 
-    saveClaim(claim)
-    setSubmittedClaimId(claim.id)
-    setStep("success")
+    if (uploadedFiles.length === 0) {
+      console.log("[v0] Submission blocked: No photos uploaded")
+      alert("Please upload at least one photo of the damage before submitting.")
+      return
+    }
+
+    setIsSubmitting(true)
+    console.log("[v0] Set isSubmitting to true")
+
+    try {
+      console.log("[v0] Submitting claim with", uploadedFiles.length, "photos")
+
+      const claim = generateAIAssessment({
+        policyId: formData.policyId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        vinNumber: formData.vinNumber,
+        incidentLocation: formData.incidentLocation,
+        vehicle: formData.vehicle,
+        incidentDate: formData.incidentDate,
+        incidentDescription: formData.incidentDescription,
+        photos: uploadedFiles,
+      })
+
+      console.log(
+        "[v0] Generated claim:",
+        claim.id,
+        "with confidence:",
+        claim.confidenceScore,
+        "and source:",
+        claim.source,
+      )
+
+      saveClaim(claim)
+      console.log("[v0] Claim saved, setting success state")
+      setSubmittedClaimId(claim.id)
+      setStep("success")
+    } catch (error) {
+      console.error("[v0] Error during claim submission:", error)
+      alert("An error occurred while submitting your claim. Please try again.")
+      setIsSubmitting(false)
+    }
   }
 
   if (step === "success") {
@@ -362,12 +391,17 @@ export function ClaimSubmissionForm() {
             </Link>
             <Button
               type="submit"
-              disabled={uploadedFiles.length === 0}
-              className="bg-gradient-blob text-white disabled:opacity-50"
+              disabled={uploadedFiles.length === 0 || isSubmitting}
+              className="bg-gradient-blob text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Claim
+              {isSubmitting ? "Submitting..." : "Submit Claim"}
             </Button>
           </div>
+          {uploadedFiles.length === 0 && (
+            <div className="flex justify-end mt-2">
+              <p className="text-sm text-muted-foreground">Please upload at least one photo to submit your claim</p>
+            </div>
+          )}
         </form>
       </main>
     </div>
