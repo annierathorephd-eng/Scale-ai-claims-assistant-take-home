@@ -15,8 +15,8 @@ interface AssessmentInput {
 }
 
 export function generateAIAssessment(input: AssessmentInput): Claim {
-  // Base confidence: 70% + 7% per photo, capped at 95%
-  const baseConfidence = Math.min(70 + input.photos.length * 7, 95)
+  // Base confidence: 70% + 8% per photo, capped at 95%
+  const baseConfidence = Math.min(70 + input.photos.length * 8, 95)
 
   // Description quality bonus: +5% for detailed descriptions with damage keywords
   let descriptionBonus = 0
