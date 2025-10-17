@@ -4,34 +4,34 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Claims AI inspired dark theme with gradient accents */
-  --background: oklch(0.08 0 0); /* Near black */
-  --foreground: oklch(0.98 0 0); /* White */
-  --card: oklch(0.12 0 0); /* Dark gray card */
+  /* Updated theme for Claims AI landing page - dark with blue/cyan accents */
+  --background: oklch(0.08 0 0); /* Near black background */
+  --foreground: oklch(0.98 0 0); /* White text */
+  --card: oklch(0.12 0 0); /* Dark card background */
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.1 0 0);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.98 0 0); /* White primary */
-  --primary-foreground: oklch(0.08 0 0); /* Black text on white */
-  --secondary: oklch(0.2 0 0); /* Dark gray */
+  --primary: oklch(0.98 0 0); /* White for primary buttons */
+  --primary-foreground: oklch(0.08 0 0); /* Black text on white buttons */
+  --secondary: oklch(0.2 0 0); /* Dark gray for secondary elements */
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0 0);
-  --muted-foreground: oklch(0.65 0 0); /* Gray text */
-  --accent: oklch(0.75 0.15 280); /* Purple accent */
+  --muted-foreground: oklch(0.6 0 0); /* Muted gray text */
+  --accent: oklch(0.7 0.15 220); /* Cyan/blue accent */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.25 0 0); /* Subtle border */
+  --border: oklch(0.22 0 0); /* Subtle borders */
   --input: oklch(0.2 0 0);
-  --ring: oklch(0.75 0.15 280);
-  --success: oklch(0.65 0.18 150); /* Green for approved */
-  --warning: oklch(0.75 0.15 60); /* Yellow for pending */
-  --info: oklch(0.7 0.15 220); /* Cyan accent */
-  --chart-1: oklch(0.75 0.15 320); /* Pink */
-  --chart-2: oklch(0.7 0.15 200); /* Cyan */
-  --chart-3: oklch(0.75 0.15 280); /* Purple */
-  --chart-4: oklch(0.65 0.18 150); /* Green */
-  --chart-5: oklch(0.75 0.15 60); /* Yellow */
+  --ring: oklch(0.7 0.15 220);
+  --success: oklch(0.65 0.18 150);
+  --warning: oklch(0.75 0.15 60);
+  --info: oklch(0.7 0.15 220);
+  --chart-1: oklch(0.75 0.15 320);
+  --chart-2: oklch(0.7 0.15 200);
+  --chart-3: oklch(0.75 0.15 280);
+  --chart-4: oklch(0.65 0.18 150);
+  --chart-5: oklch(0.75 0.15 60);
   --radius: 0.5rem;
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -100,9 +100,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-success: oklch(0.65 0.18 150); /* Green for approved */
-  --color-warning: oklch(0.75 0.15 60); /* Yellow for pending */
-  --color-info: oklch(0.7 0.15 220); /* Cyan accent */
+  --color-success: oklch(0.65 0.18 150);
+  --color-warning: oklch(0.75 0.15 60);
+  --color-info: oklch(0.7 0.15 220);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -131,20 +131,26 @@
   }
 }
 
-/* Custom gradient utilities for Claims AI aesthetic */
-.gradient-blob {
-  background: linear-gradient(
-    135deg,
-    oklch(0.85 0.12 320) 0% /* Soft pink */,
-    oklch(0.8 0.1 280) 30% /* Purple */,
-    oklch(0.75 0.12 220) 60% /* Blue */,
-    oklch(0.8 0.1 190) 100% /* Cyan */
-  );
-}
-
+/* Added gradient utilities for landing page accents */
 .gradient-text {
-  background: linear-gradient(90deg, oklch(0.85 0.12 320), oklch(0.8 0.1 190));
+  background: linear-gradient(90deg, oklch(0.85 0.15 220), oklch(0.75 0.15 200));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, oklch(0.7 0.15 220), oklch(0.6 0.12 200));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
