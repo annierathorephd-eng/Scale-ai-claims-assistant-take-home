@@ -173,26 +173,39 @@ export function generateAIAssessment(input: AssessmentInput): Claim {
 }
 
 export function saveClaim(claim: Claim): void {
-  const storedClaims = localStorage.getItem("mockClaims")
-  const claims = storedClaims ? JSON.parse(storedClaims) : []
-
-  claims.unshift(claim)
-
-  const recentClaims = claims.slice(0, 5)
-
   try {
+    const storedClaims = localStorage.getItem("mockClaims")
+    const claims = storedClaims ? JSON.parse(storedClaims) : []
+
+    // Add new claim at the beginning
+    claims.unshift(claim)
+
+    // Only keep 2 most recent claims to avoid quota issues
+    const recentClaims = claims.slice(0, 2)
+
     localStorage.setItem("mockClaims", JSON.stringify(recentClaims))
     console.log("[v0] Claim saved successfully to localStorage")
   } catch (error) {
     console.error("[v0] Failed to save claim to localStorage:", error)
-    const minimalClaims = claims.slice(0, 3)
+
+    // If still failing, clear everything and save just this claim
     try {
-      localStorage.setItem("mockClaims", JSON.stringify(minimalClaims))
-      console.log("[v0] Saved claim after reducing to 3 most recent")
-    } catch (retryError) {
-      console.error("[v0] Still failed after cleanup:", retryError)
+      localStorage.removeItem("mockClaims")
       localStorage.setItem("mockClaims", JSON.stringify([claim]))
       console.log("[v0] Cleared all old claims and saved new one")
+    } catch (finalError) {
+      console.error("[v0] Critical storage error:", finalError)
+      // Last resort: save without photos
+      const claimWithoutPhotos = {
+        ...claim,
+        photos: claim.photos.map((p) => ({
+          url: "/damaged-car.png",
+          caption: p.caption,
+          analysis: p.analysis,
+        })),
+      }
+      localStorage.setItem("mockClaims", JSON.stringify([claimWithoutPhotos]))
+      console.log("[v0] Saved claim without photo data as last resort")
     }
   }
 }
