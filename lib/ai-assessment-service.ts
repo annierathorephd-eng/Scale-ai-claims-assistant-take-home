@@ -173,35 +173,25 @@ export function generateAIAssessment(input: AssessmentInput): Claim {
 }
 
 export function saveClaim(claim: Claim): void {
-  // Create a lightweight version of the claim for storage
-  const claimForStorage = {
-    ...claim,
-    photos: claim.photos.map((photo) => ({
-      url: "/damaged-car.png",
-      caption: photo.caption,
-      analysis: photo.analysis,
-    })),
-  }
-
   const storedClaims = localStorage.getItem("mockClaims")
   const claims = storedClaims ? JSON.parse(storedClaims) : []
 
-  claims.unshift(claimForStorage)
+  claims.unshift(claim)
+
+  const recentClaims = claims.slice(0, 5)
 
   try {
-    localStorage.setItem("mockClaims", JSON.stringify(claims))
+    localStorage.setItem("mockClaims", JSON.stringify(recentClaims))
     console.log("[v0] Claim saved successfully to localStorage")
   } catch (error) {
     console.error("[v0] Failed to save claim to localStorage:", error)
-    // If storage fails, keep only the most recent 10 claims
-    const recentClaims = claims.slice(0, 10)
+    const minimalClaims = claims.slice(0, 3)
     try {
-      localStorage.setItem("mockClaims", JSON.stringify(recentClaims))
-      console.log("[v0] Saved claim after clearing old data")
+      localStorage.setItem("mockClaims", JSON.stringify(minimalClaims))
+      console.log("[v0] Saved claim after reducing to 3 most recent")
     } catch (retryError) {
       console.error("[v0] Still failed after cleanup:", retryError)
-      // Clear all and save just this claim
-      localStorage.setItem("mockClaims", JSON.stringify([claimForStorage]))
+      localStorage.setItem("mockClaims", JSON.stringify([claim]))
       console.log("[v0] Cleared all old claims and saved new one")
     }
   }
