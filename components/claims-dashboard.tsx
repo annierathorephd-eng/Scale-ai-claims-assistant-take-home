@@ -60,6 +60,7 @@ export function ClaimsDashboard() {
   })
   const [expandedClaims, setExpandedClaims] = useState<Set<string>>(new Set())
   const [claims, setClaims] = useState<ReturnType<typeof mapClaimToDashboard>[]>([])
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const [statusFilters, setStatusFilters] = useState<string[]>([])
   const [sourceFilters, setSourceFilters] = useState<string[]>([])
@@ -74,23 +75,52 @@ export function ClaimsDashboard() {
   const [maxCost, setMaxCost] = useState("")
 
   useEffect(() => {
-    const storedClaims = localStorage.getItem("mockClaims")
-    let allClaims = [...mockClaims]
+    const loadClaims = () => {
+      const storedClaims = localStorage.getItem("mockClaims")
+      let allClaims = [...mockClaims]
 
-    if (storedClaims) {
-      try {
-        const parsedClaims = JSON.parse(storedClaims)
-        const claimIds = new Set(parsedClaims.map((c: Claim) => c.id))
-        const uniqueMockClaims = allClaims.filter((c) => !claimIds.has(c.id))
-        allClaims = [...parsedClaims, ...uniqueMockClaims]
-      } catch (e) {
-        console.error("Error parsing stored claims:", e)
+      if (storedClaims) {
+        try {
+          const parsedClaims = JSON.parse(storedClaims)
+          const claimIds = new Set(parsedClaims.map((c: Claim) => c.id))
+          const uniqueMockClaims = allClaims.filter((c) => !claimIds.has(c.id))
+          allClaims = [...parsedClaims, ...uniqueMockClaims]
+        } catch (e) {
+          console.error("Error parsing stored claims:", e)
+        }
+      }
+
+      const mappedClaims = allClaims.map(mapClaimToDashboard)
+      setClaims(mappedClaims)
+    }
+
+    loadClaims()
+
+    // Listen for custom refresh event
+    const handleRefresh = () => {
+      loadClaims()
+    }
+
+    window.addEventListener("refreshDashboard", handleRefresh)
+
+    return () => {
+      window.removeEventListener("refreshDashboard", handleRefresh)
+    }
+  }, [viewParam, refreshTrigger])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setRefreshTrigger((prev) => prev + 1)
       }
     }
 
-    const mappedClaims = allClaims.map(mapClaimToDashboard)
-    setClaims(mappedClaims)
-  }, [viewParam])
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
 
   useEffect(() => {
     if (viewParam === "policyholder" || viewParam === "agent" || viewParam === "adjuster") {
@@ -102,7 +132,8 @@ export function ClaimsDashboard() {
     const savedView = localStorage.getItem("dashboardView")
     if (savedView === "agent" || savedView === "adjuster") {
       setRoleView(savedView)
-      localStorage.removeItem("dashboardView") // Clear after restoring
+      localStorage.removeItem("dashboardView")
+      setRefreshTrigger((prev) => prev + 1)
     }
   }, [])
 

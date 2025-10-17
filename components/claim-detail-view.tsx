@@ -310,12 +310,13 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
     }
     saveClaimData(updatedClaim)
 
-    // Update the shared claim data in localStorage for dashboard sync
     updateSharedClaimStatus(
       claimData.id,
-      isAgentView ? "Sent for Approval" : "Approved",
+      isAgentView ? "Needs Review" : "Approved",
       isAgentView ? "agent-assessed" : undefined,
     )
+
+    window.dispatchEvent(new Event("refreshDashboard"))
 
     setTimeout(() => {
       if (returnTo) {
@@ -344,8 +345,9 @@ export function ClaimDetailView({ claimId, returnTo }: ClaimDetailViewProps) {
     }
     saveClaimData(updatedClaim)
 
-    // Update the shared claim data in localStorage for dashboard sync
     updateSharedClaimStatus(claimData.id, "Pending Additional Info")
+
+    window.dispatchEvent(new Event("refreshDashboard"))
 
     setShowEmailDialog(false)
     setTimeout(() => {
@@ -1548,7 +1550,16 @@ function updateSharedClaimStatus(
   // Find and update the claim
   const claimIndex = claims.findIndex((c: SharedClaim) => c.id === claimId)
   if (claimIndex !== -1) {
-    const storageStatus = newStatus === "Sent for Approval" ? "Needs Review" : newStatus
+    // Ensure the status is correctly mapped, especially for 'Sent for Approval'
+    const storageStatus =
+      newStatus === "Sent for Approval"
+        ? "Needs Review"
+        : newStatus === "Approved"
+          ? "Approved"
+          : newStatus === "Pending Additional Info"
+            ? "Pending Additional Info"
+            : "Needs Review" // Default if not explicitly handled
+
     claims[claimIndex].status = storageStatus as "Needs Review" | "Approved" | "Pending Additional Info"
     claims[claimIndex].lastUpdated = new Date().toISOString()
 
