@@ -14,6 +14,34 @@ interface AssessmentInput {
   photos: Array<{ id: string; name: string; url: string; preview: string }>
 }
 
+function compressBase64Image(base64String: string, maxWidth = 800): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      let width = img.width
+      let height = img.height
+
+      // Calculate new dimensions
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width
+        width = maxWidth
+      }
+
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext("2d")
+      ctx?.drawImage(img, 0, 0, width, height)
+
+      // Compress to JPEG with 0.7 quality
+      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7)
+      resolve(compressedBase64)
+    }
+    img.src = base64String
+  })
+}
+
 export function generateAIAssessment(input: AssessmentInput): Claim {
   // Base confidence: 70% + 8% per photo, capped at 95%
   const baseConfidence = Math.min(70 + input.photos.length * 8, 95)
@@ -172,6 +200,24 @@ export function generateAIAssessment(input: AssessmentInput): Claim {
   return claim
 }
 
+export async function assessClaim(input: AssessmentInput): Promise<Claim> {
+  console.log("[v0] Starting claim assessment")
+  console.log("[v0] Input photos count:", input.photos.length)
+
+  const compressedPhotos = await Promise.all(
+    input.photos.map(async (photo) => ({
+      ...photo,
+      preview: await compressBase64Image(photo.preview),
+    })),
+  )
+
+  const claim = generateAIAssessment({ ...input, photos: compressedPhotos })
+  console.log("[v0] Generated claim:", claim.id, "with confidence:", claim.confidenceScore)
+
+  saveClaim(claim)
+  return claim
+}
+
 export function saveClaim(claim: Claim): void {
   try {
     const storedClaims = localStorage.getItem("mockClaims")
@@ -188,24 +234,27 @@ export function saveClaim(claim: Claim): void {
   } catch (error) {
     console.error("[v0] Failed to save claim to localStorage:", error)
 
-    // If still failing, clear everything and save just this claim
     try {
       localStorage.removeItem("mockClaims")
       localStorage.setItem("mockClaims", JSON.stringify([claim]))
       console.log("[v0] Cleared all old claims and saved new one")
     } catch (finalError) {
-      console.error("[v0] Critical storage error:", finalError)
-      // Last resort: save without photos
+      console.error("[v0] Critical storage error - saving without photos:", finalError)
       const claimWithoutPhotos = {
         ...claim,
-        photos: claim.photos.map((p) => ({
-          url: "/damaged-car.png",
+        photos: claim.photos.map((p, idx) => ({
+          url: `/placeholder.svg?height=400&width=600&query=car damage photo ${idx + 1}`,
           caption: p.caption,
           analysis: p.analysis,
         })),
       }
-      localStorage.setItem("mockClaims", JSON.stringify([claimWithoutPhotos]))
-      console.log("[v0] Saved claim without photo data as last resort")
+      try {
+        localStorage.clear() // Clear everything as last resort
+        localStorage.setItem("mockClaims", JSON.stringify([claimWithoutPhotos]))
+        console.log("[v0] Saved claim with placeholder photos as absolute last resort")
+      } catch (e) {
+        console.error("[v0] Complete storage failure:", e)
+      }
     }
   }
 }
