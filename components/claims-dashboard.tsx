@@ -246,6 +246,65 @@ export function ClaimsDashboard() {
     )
   }
 
+  const filteredClaims = claims.filter((claim) => {
+    const matchesClaimId = claimIdSearch === "" || claim.id.toLowerCase().includes(claimIdSearch.toLowerCase())
+    const matchesPolicyholder =
+      policyholderSearch === "" || claim.policyHolder.toLowerCase().includes(policyholderSearch.toLowerCase())
+
+    const matchesRole =
+      roleView === "agent"
+        ? claim.confidence < 0.9 && (claim.source === "ai-assessed" || claim.source === "agent-assessed")
+        : claim.confidence >= 0.9 || claim.source === "agent-assessed"
+
+    // Log filtering details for debugging
+    if (roleView === "agent") {
+      console.log(`[v0] Filtering claim ${claim.id}:`, {
+        confidence: claim.confidence,
+        source: claim.source,
+        status: claim.status,
+        matchesRole,
+        confidenceCheck: claim.confidence < 0.9,
+        sourceCheck: claim.source === "ai-assessed" || claim.source === "agent-assessed",
+      })
+    }
+
+    let matchesStatus = true
+    if (statusFilters.length > 0) {
+      matchesStatus = statusFilters.includes(claim.status)
+    }
+
+    let matchesSource = true
+    if (sourceFilters.length > 0) {
+      matchesSource = sourceFilters.includes(claim.source)
+    }
+
+    const matchesPolicyId = policyIdFilter === "" || claim.policyId.toLowerCase().includes(policyIdFilter.toLowerCase())
+
+    let matchesCreatedDate = true
+    if (createdFromDate && claim.dateSubmitted < createdFromDate) matchesCreatedDate = false
+    if (createdToDate && claim.dateSubmitted > createdToDate) matchesCreatedDate = false
+
+    let matchesUpdatedDate = true
+    if (updatedFromDate && claim.lastUpdated < updatedFromDate) matchesUpdatedDate = false
+    if (updatedToDate && claim.lastUpdated > updatedToDate) matchesUpdatedDate = false
+
+    let matchesCost = true
+    if (minCost && claim.estimatedCost < Number.parseFloat(minCost)) matchesCost = false
+    if (maxCost && claim.estimatedCost > Number.parseFloat(maxCost)) matchesCost = false
+
+    return (
+      matchesClaimId &&
+      matchesPolicyholder &&
+      matchesRole &&
+      matchesStatus &&
+      matchesSource &&
+      matchesPolicyId &&
+      matchesCreatedDate &&
+      matchesUpdatedDate &&
+      matchesCost
+    )
+  })
+
   if (roleView === "policyholder") {
     return (
       <div className="min-h-screen bg-background">
@@ -291,53 +350,6 @@ export function ClaimsDashboard() {
       </div>
     )
   }
-
-  const filteredClaims = claims.filter((claim) => {
-    const matchesClaimId = claimIdSearch === "" || claim.id.toLowerCase().includes(claimIdSearch.toLowerCase())
-    const matchesPolicyholder =
-      policyholderSearch === "" || claim.policyHolder.toLowerCase().includes(policyholderSearch.toLowerCase())
-
-    const matchesRole =
-      roleView === "agent"
-        ? claim.confidence < 0.9 && (claim.source === "ai-assessed" || claim.source === "agent-assessed")
-        : claim.confidence >= 0.9 || claim.source === "agent-assessed"
-
-    let matchesStatus = true
-    if (statusFilters.length > 0) {
-      matchesStatus = statusFilters.includes(claim.status)
-    }
-
-    let matchesSource = true
-    if (sourceFilters.length > 0) {
-      matchesSource = sourceFilters.includes(claim.source)
-    }
-
-    const matchesPolicyId = policyIdFilter === "" || claim.policyId.toLowerCase().includes(policyIdFilter.toLowerCase())
-
-    let matchesCreatedDate = true
-    if (createdFromDate && claim.dateSubmitted < createdFromDate) matchesCreatedDate = false
-    if (createdToDate && claim.dateSubmitted > createdToDate) matchesCreatedDate = false
-
-    let matchesUpdatedDate = true
-    if (updatedFromDate && claim.lastUpdated < updatedFromDate) matchesUpdatedDate = false
-    if (updatedToDate && claim.lastUpdated > updatedToDate) matchesUpdatedDate = false
-
-    let matchesCost = true
-    if (minCost && claim.estimatedCost < Number.parseFloat(minCost)) matchesCost = false
-    if (maxCost && claim.estimatedCost > Number.parseFloat(maxCost)) matchesCost = false
-
-    return (
-      matchesClaimId &&
-      matchesPolicyholder &&
-      matchesRole &&
-      matchesStatus &&
-      matchesSource &&
-      matchesPolicyId &&
-      matchesCreatedDate &&
-      matchesUpdatedDate &&
-      matchesCost
-    )
-  })
 
   return (
     <div className="min-h-screen bg-background">
