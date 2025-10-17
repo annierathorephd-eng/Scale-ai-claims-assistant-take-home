@@ -25,6 +25,7 @@ export function ClaimSubmissionForm() {
   const [step, setStep] = useState<"form" | "success">("form")
   const [submittedClaimId, setSubmittedClaimId] = useState<string>("")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     policyId: "",
     firstName: "",
@@ -64,6 +65,14 @@ export function ClaimSubmissionForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] Submit button clicked")
+    console.log("[v0] Is submitting:", isSubmitting)
+
+    if (isSubmitting) {
+      console.log("[v0] Already submitting, ignoring click")
+      return
+    }
+
     console.log("[v0] Form submission started")
     console.log("[v0] Form data:", formData)
     console.log("[v0] Uploaded files count:", uploadedFiles.length)
@@ -74,34 +83,44 @@ export function ClaimSubmissionForm() {
       return
     }
 
-    console.log("[v0] Submitting claim with", uploadedFiles.length, "photos")
+    setIsSubmitting(true)
+    console.log("[v0] Set isSubmitting to true")
 
-    const claim = generateAIAssessment({
-      policyId: formData.policyId,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      vinNumber: formData.vinNumber,
-      incidentLocation: formData.incidentLocation,
-      vehicle: formData.vehicle,
-      incidentDate: formData.incidentDate,
-      incidentDescription: formData.incidentDescription,
-      photos: uploadedFiles,
-    })
+    try {
+      console.log("[v0] Submitting claim with", uploadedFiles.length, "photos")
 
-    console.log(
-      "[v0] Generated claim:",
-      claim.id,
-      "with confidence:",
-      claim.confidenceScore,
-      "and source:",
-      claim.source,
-    )
+      const claim = generateAIAssessment({
+        policyId: formData.policyId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        vinNumber: formData.vinNumber,
+        incidentLocation: formData.incidentLocation,
+        vehicle: formData.vehicle,
+        incidentDate: formData.incidentDate,
+        incidentDescription: formData.incidentDescription,
+        photos: uploadedFiles,
+      })
 
-    saveClaim(claim)
-    setSubmittedClaimId(claim.id)
-    setStep("success")
+      console.log(
+        "[v0] Generated claim:",
+        claim.id,
+        "with confidence:",
+        claim.confidenceScore,
+        "and source:",
+        claim.source,
+      )
+
+      saveClaim(claim)
+      console.log("[v0] Claim saved, setting success state")
+      setSubmittedClaimId(claim.id)
+      setStep("success")
+    } catch (error) {
+      console.error("[v0] Error during claim submission:", error)
+      alert("An error occurred while submitting your claim. Please try again.")
+      setIsSubmitting(false)
+    }
   }
 
   if (step === "success") {
@@ -372,10 +391,10 @@ export function ClaimSubmissionForm() {
             </Link>
             <Button
               type="submit"
-              disabled={uploadedFiles.length === 0}
+              disabled={uploadedFiles.length === 0 || isSubmitting}
               className="bg-gradient-blob text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Claim
+              {isSubmitting ? "Submitting..." : "Submit Claim"}
             </Button>
           </div>
           {uploadedFiles.length === 0 && (
